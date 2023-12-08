@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<h2>Login</h2>
+<form id="loginForm" th:action="@{/auth/signin}" method="post">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br>
+    <button type="button" onclick="submitForm()">Login</button>
+</form>
+
+<script>
+    function setSecureCookie(name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+
+        // Add "Secure" and "SameSite" attributes
+        var secureAttribute = "; Secure";
+        var sameSiteAttribute = "; SameSite=Strict";
+
+        document.cookie = name + "=" + value + expires + secureAttribute + sameSiteAttribute + "; path=/";
+    }
+    function submitForm() {
+        var form = document.getElementById("loginForm");
+        var formData = new FormData(form);
+        var jsonData = {};
+
+        formData.forEach(function (value, key) {
+            jsonData[key] = value;
+        });
+
+        fetch("/auth/signin", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    // Check for non-2xx HTTP response status
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text(); // Return the raw response text
+            })
+            .then(data => {
+                // Assuming the response is a plain string (JWT token)
+                console.log("JWT Token:", data);
+
+                // Save the token in a cookie
+                setSecureCookie('jwtToken', data, 7); // Adjust the expiration (in days) as needed
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Handle errors, for example, display an error message to the user
+            });
+    }
+    function checkCookie(cookieName) {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith(cookieName + '=')) {
+                return true; // Cookie found
+            }
+        }
+        return false; // Cookie not found
+    }
+
+
+
+</script>
+</body>
+</html>
